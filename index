@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分享我的名片（LIFF）</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans TC',Arial,sans-serif;margin:0;background:#0b0f14;color:#e6e9ef;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;max-width:560px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{font-size:18px;margin:0 0 10px 0}
+    .muted{color:#9ca3af;font-size:13px;margin-bottom:14px}
+    button{appearance:none;border:0;background:#10b981;color:#fff;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;width:100%}
+    .row{display:flex;gap:10px;margin-top:10px}
+    input{flex:1;border:1px solid #374151;border-radius:10px;background:#0b1220;color:#e6e9ef;padding:10px}
+    a{color:#93c5fd}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>分享我的名片</h1>
+    <div class="muted">在 LINE App 內開啟本頁，按下按鈕即可把名片分享給好友或群組。</div>
+    <div class="row">
+      <input id="liffIdInput" placeholder="輸入或使用網址參數 ?liffId=..." />
+      <button id="initBtn">初始化</button>
+    </div>
+    <div class="row">
+      <button id="shareBtn" disabled>分享名片</button>
+    </div>
+    <div class="muted" style="margin-top:12px">若看不到分享選單，請確認：1) 以手機版 LINE 開啟 2) LIFF 設定已啟用 Share target picker。</div>
+  </div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+  // 你的 Flex 名片（可直接分享）
+  const flexCard = {
+    "type": "flex",
+    "altText": "涼涼冷氣 數位名片",
+    "contents": {
+      "type": "carousel",
+      "contents": [
+        {
+          "type": "bubble",
+          "hero": {
+            "type": "image",
+            "url": "https://lh3.googleusercontent.com/d/1C3OK_qhT_2OhJSyPH79eVMVaPuobnx55",
+            "size": "full",
+            "aspectMode": "cover",
+            "aspectRatio": "1:2",
+            "action": { "type": "uri", "uri": "https://www.facebook.com/coooolAC/?locale=zh_TW" }
+          }
+        },
+        {
+          "type": "bubble",
+          "hero": {
+            "type": "image",
+            "url": "https://lh3.googleusercontent.com/d/13gzKe4gFPOtTwSMnoVhykIztPNMt-wcY",
+            "size": "full",
+            "aspectMode": "cover",
+            "aspectRatio": "1:2",
+            "action": { "type": "uri", "uri": "https://www.facebook.com/coooolAC/?locale=zh_TW" }
+          }
+        },
+        {
+          "type": "bubble",
+          "hero": {
+            "type": "image",
+            "url": "https://lh3.googleusercontent.com/d/1rEk2rIWRA0w1WwxGX0gYTOK2YpAO-SKt",
+            "size": "full",
+            "aspectMode": "cover",
+            "aspectRatio": "1:2",
+            "action": { "type": "uri", "uri": "https://www.facebook.com/coooolAC/?locale=zh_TW" }
+          }
+        },
+        {
+          "type": "bubble",
+          "hero": {
+            "type": "image",
+            "url": "https://lh3.googleusercontent.com/d/1I8bRo3Ap3iRpGoktXxc5HUxftUKtBVdq",
+            "size": "full",
+            "aspectMode": "cover",
+            "aspectRatio": "1:1"
+          },
+          "body": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "md",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "backgroundColor": "#00000099",
+                "cornerRadius": "md",
+                "paddingAll": "10px",
+                "contents": [
+                  { "type": "text", "text": "涼涼冷氣", "weight": "bold", "size": "xl", "color": "#FFFFFF" },
+                  { "type": "text", "text": "專業冷氣安裝、維修、清潔", "size": "sm", "color": "#DDDDDD", "wrap": true }
+                ]
+              }
+            ]
+          },
+          "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": [
+              { "type": "button", "style": "primary", "height": "sm", "action": { "type": "uri", "label": "📞 撥打電話", "uri": "tel:+886985009706" } },
+              { "type": "button", "style": "secondary", "height": "sm", "action": { "type": "uri", "label": "📍 導航", "uri": "https://maps.app.goo.gl/fontpDoV6vnj45LK9" } },
+              { "type": "button", "style": "secondary", "height": "sm", "action": { "type": "uri", "label": "🌐 官網/預約", "uri": "https://www.facebook.com/coooolAC/?locale=zh_TW" } }
+            ]
+          }
+        }
+      ]
+    }
+  };
+
+  function getParam(name){ const url = new URL(location.href); return url.searchParams.get(name); }
+
+  async function initLiff(){
+    const inParam = getParam('liffId');
+    const liffId = inParam || document.getElementById('liffIdInput').value.trim();
+    if (!liffId) { alert('請輸入 LIFF ID，或在網址後加 ?liffId=...'); return; }
+    document.getElementById('liffIdInput').value = liffId;
+    await liff.init({ liffId, withLoginOnExternalBrowser: true });
+    if (!liff.isLoggedIn()) liff.login();
+    document.getElementById('shareBtn').disabled = false;
+  }
+
+  document.getElementById('initBtn').addEventListener('click', initLiff);
+  window.addEventListener('DOMContentLoaded', () => { if (getParam('liffId')) initLiff(); });
+
+  document.getElementById('shareBtn').addEventListener('click', async () => {
+    if (!liff.isLoggedIn()) await liff.login();
+    if (!liff.isApiAvailable('shareTargetPicker')) { alert('請在 LINE App 內開啟此頁再分享'); return; }
+    await liff.shareTargetPicker([flexCard]);
+  });
+  </script>
+</body>
+</html>
