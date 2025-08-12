@@ -3,35 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>分享我的名片（LIFF）</title>
+  <title>分享我的名片（LIFF｜自動分享）</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans TC',Arial,sans-serif;margin:0;background:#0b0f14;color:#e6e9ef;display:flex;align-items:center;justify-content:center;min-height:100vh}
-    .card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;max-width:560px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    h1{font-size:18px;margin:0 0 10px 0}
-    .muted{color:#9ca3af;font-size:13px;margin-bottom:14px}
-    button{appearance:none;border:0;background:#10b981;color:#fff;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;width:100%}
-    .row{display:flex;gap:10px;margin-top:10px}
-    input{flex:1;border:1px solid #374151;border-radius:10px;background:#0b1220;color:#e6e9ef;padding:10px}
+    .wrap{max-width:560px;width:92%;text-align:center}
+    .hint{color:#a3a3a3;font-size:13px;margin-top:12px}
     a{color:#93c5fd}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>分享我的名片</h1>
-    <div class="muted">在 LINE App 內開啟本頁，按下按鈕即可把名片分享給好友或群組。</div>
-    <div class="row">
-      <input id="liffIdInput" placeholder="輸入或使用網址參數 ?liffId=..." />
-      <button id="initBtn">初始化</button>
-    </div>
-    <div class="row">
-      <button id="shareBtn" disabled>分享名片</button>
-    </div>
-    <div class="muted" style="margin-top:12px">若看不到分享選單，請確認：1) 以手機版 LINE 開啟 2) LIFF 設定已啟用 Share target picker。</div>
+  <div class="wrap">
+    <div>正在開啟分享面板…</div>
+    <div class="hint">若長時間沒有反應，請確認：1) 以<span style="white-space:nowrap">手機版 LINE</span>開啟 2) 此 LIFF 已啟用 Share Target Picker。</div>
   </div>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-  // 你的 Flex 名片（可直接分享）
+  // === 請將 YOUR_LIFF_ID 改成你的 LIFF ID；或用網址參數 ?liffId=xxxx 帶入 ===
+  const DEFAULT_LIFF_ID = "2007912782-KP2YNLap"; // 例如：2007912782-KP2YNLap
+
+  // 你的 Flex 名片（四個 bubble）
   const flexCard = {
     "type": "flex",
     "altText": "涼涼冷氣 數位名片",
@@ -113,26 +104,24 @@
     }
   };
 
-  function getParam(name){ const url = new URL(location.href); return url.searchParams.get(name); }
+  function getParam(name){ const u=new URL(location.href); return u.searchParams.get(name); }
 
-  async function initLiff(){
-    const inParam = getParam('liffId');
-    const liffId = inParam || document.getElementById('liffIdInput').value.trim();
-    if (!liffId) { alert('請輸入 LIFF ID，或在網址後加 ?liffId=...'); return; }
-    document.getElementById('liffIdInput').value = liffId;
-    await liff.init({ liffId, withLoginOnExternalBrowser: true });
-    if (!liff.isLoggedIn()) liff.login();
-    document.getElementById('shareBtn').disabled = false;
-  }
-
-  document.getElementById('initBtn').addEventListener('click', initLiff);
-  window.addEventListener('DOMContentLoaded', () => { if (getParam('liffId')) initLiff(); });
-
-  document.getElementById('shareBtn').addEventListener('click', async () => {
-    if (!liff.isLoggedIn()) await liff.login();
-    if (!liff.isApiAvailable('shareTargetPicker')) { alert('請在 LINE App 內開啟此頁再分享'); return; }
-    await liff.shareTargetPicker([flexCard]);
-  });
+  (async () => {
+    try {
+      const liffId = getParam('liffId') || DEFAULT_LIFF_ID;
+      await liff.init({ liffId, withLoginOnExternalBrowser: true });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      if (!liff.isApiAvailable('shareTargetPicker')) {
+        alert('請在手機版 LINE App 內開啟此頁再分享'); return;
+      }
+      await liff.shareTargetPicker([flexCard]);
+      // 分享完成後自動關閉 LIFF 視窗
+      liff.closeWindow();
+    } catch (e) {
+      console.error(e);
+      alert('初始化或分享失敗：'+ (e?.message||e));
+    }
+  })();
   </script>
 </body>
 </html>
